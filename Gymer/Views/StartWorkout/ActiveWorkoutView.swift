@@ -141,8 +141,11 @@ struct ActiveWorkoutView: View {
             VStack(spacing: Spacing.sm) {
                 ForEach(Array(exerciseState.sets.enumerated()), id: \.1.id) { setIndex, setState in
                     SetRowView(
-                        setIndex: setIndex + 1,
-                        weight: Binding(
+                        setType: Binding(
+                            get: { setState.type },
+                            set: { viewModel.updateSetType($0, for: exerciseIndex, setIndex: setIndex) }
+                        ),
+                        weightKg: Binding(
                             get: { setState.weightKg },
                             set: { viewModel.updateWeight($0, for: exerciseIndex, setIndex: setIndex) }
                         ),
@@ -150,15 +153,15 @@ struct ActiveWorkoutView: View {
                             get: { setState.reps },
                             set: { viewModel.updateReps($0, for: exerciseIndex, setIndex: setIndex) }
                         ),
-                        setType: Binding(
-                            get: { setState.type },
-                            set: { viewModel.updateSetType($0, for: exerciseIndex, setIndex: setIndex) }
-                        ),
                         isFailure: Binding(
                             get: { setState.isFailure },
                             set: { _ in viewModel.toggleFailure(for: exerciseIndex, setIndex: setIndex) }
                         ),
-                        isCompleted: setState.isCompleted,
+                        isCompleted: Binding(
+                            get: { setState.isCompleted },
+                            set: { _ in }
+                        ),
+                        setIndex: setIndex + 1,
                         onComplete: {
                             viewModel.completeSet(exerciseIndex: exerciseIndex, setIndex: setIndex)
                         }

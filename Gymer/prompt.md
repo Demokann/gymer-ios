@@ -1,0 +1,3 @@
+Gymer /Users/demokan/Documents/Projects/Gymer/Gymer/Gymer/Views/StartWorkout/ActiveWorkoutView.swift /Users/demokan/Documents/Projects/Gymer/Gymer/Gymer/Views/StartWorkout/ActiveWorkoutView.swift:143:31 Incorrect argument labels in call (have 'setIndex:weight:reps:setType:isFailure:isCompleted:onComplete:', expected 'setType:weightKg:reps:isFailure:isCompleted:setIndex:onComplete:')
+ /Users/demokan/Documents/Projects/Gymer/Gymer/Gymer/Views/StartWorkout/ActiveWorkoutView.swift:161:47 Cannot convert value of type 'Bool' to expected argument type 'Binding<Bool>'
+ dosya pathleri bu bilgisayardan değil aklın karışmasın, build hatası veren bu dosyaları ve hataya sebep olabilecek şeyleri fixle
