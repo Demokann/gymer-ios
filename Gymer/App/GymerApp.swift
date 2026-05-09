@@ -8,6 +8,8 @@ import SwiftData
 
 @main
 struct GymerApp: App {
+    @State private var timerService = TimerService()
+
     var body: some Scene {
         WindowGroup {
             AppRouter()
@@ -18,6 +20,7 @@ struct GymerApp: App {
                     SetLog.self,
                     Exercise.self
                 ])
+                .environment(timerService)
                 .preferredColorScheme(.dark)
         }
     }

@@ -34,21 +34,12 @@ struct MainTabView: View {
                 Divider()
                     .background(Color.gymBorder)
                 
-                HStack {
+                HStack(spacing: 0) {
                     tabItem(index: 0, icon: "person.fill", label: "Profile")
                     tabItem(index: 1, icon: "clock.fill", label: "History")
-                    
-                    // Centre Button Gap
-                    Spacer()
-                        .frame(width: 60)
-                    
+                    // Equal-width placeholder keeps centre button exactly mid-screen
+                    Color.clear.frame(maxWidth: .infinity)
                     tabItem(index: 3, icon: "dumbbell.fill", label: "Exercises")
-                    
-                    // Added a 4th dummy or repeat to maintain symmetry if needed? 
-                    // No, prompt says 4 tabs. I'll just use 3 real navigation tabs + the centre button.
-                    // Wait, if there are 4 items, and one is the centre, then there are 3 side tabs.
-                    // 1. Profile, 2. History, 3. Exercises.
-                    // That's 3.
                 }
                 .padding(.top, Spacing.sm)
                 .padding(.bottom, 34) // Safe area bottom approx
