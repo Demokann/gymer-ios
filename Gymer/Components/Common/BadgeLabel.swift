@@ -1,22 +1,27 @@
 // MARK: - BadgeLabel
 // Owner: UI Designer Agent
-// Last Modified: 28.04.2026
+// Last Modified: 06.05.2026
 // Dependencies: DesignSystem/Colors, Models/Enums
 
 import SwiftUI
 
 struct BadgeLabel: View {
-    enum BadgeType {
-        case bodyRegion(BodyRegion)
-        case setType(SetType)
-        case personalRecord
-        case custom(String, Color)
+    enum Style {
+        case system
+        case region
+        case warmUp
+        case dropSet
+        case failure
+        case pr
+        case custom
     }
     
-    let type: BadgeType
+    let text: String
+    let style: Style
+    var customColor: Color? = nil
     
     var body: some View {
-        Text(text)
+        Text(text.uppercased())
             .gymFont(.caption)
             .fontWeight(.bold)
             .padding(.horizontal, 8)
@@ -26,41 +31,34 @@ struct BadgeLabel: View {
             .clipShape(Capsule())
     }
     
-    private var text: String {
-        switch type {
-        case .bodyRegion(let region):
-            return region.displayName.uppercased()
-        case .setType(let setType):
-            return setType.rawValue.uppercased()
-        case .personalRecord:
-            return "🏆 PR"
-        case .custom(let title, _):
-            return title.uppercased()
-        }
-    }
-    
     private var backgroundColor: Color {
-        switch type {
-        case .bodyRegion:
+        switch style {
+        case .system:
+            return .gymWhite
+        case .region:
             return .gymMuted
-        case .setType(let setType):
-            return setType.color
-        case .personalRecord:
+        case .warmUp:
+            return .gymAmber
+        case .dropSet:
+            return .gymRed
+        case .failure:
+            return .gymRed
+        case .pr:
             return .gymLime
-        case .custom(_, let color):
-            return color
+        case .custom:
+            return customColor ?? .gymLime
         }
     }
 }
 
 #Preview {
     VStack(spacing: 10) {
-        BadgeLabel(type: .bodyRegion(.chest))
-        BadgeLabel(type: .bodyRegion(.back))
-        BadgeLabel(type: .setType(.warmUp))
-        BadgeLabel(type: .setType(.dropSet))
-        BadgeLabel(type: .personalRecord)
-        BadgeLabel(type: .custom("Custom", .blue))
+        BadgeLabel(text: "Chest", style: .region)
+        BadgeLabel(text: "Back", style: .region)
+        BadgeLabel(text: "Warm Up", style: .warmUp)
+        BadgeLabel(text: "Drop Set", style: .dropSet)
+        BadgeLabel(text: "PR", style: .pr)
+        BadgeLabel(text: "Custom", style: .custom, customColor: .blue)
     }
     .padding()
     .background(Color.gymBlack)

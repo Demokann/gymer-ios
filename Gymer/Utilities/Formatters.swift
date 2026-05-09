@@ -26,6 +26,10 @@ enum Formatters {
         let formatted = formatter.string(from: NSNumber(value: kg)) ?? "\(kg)"
         return "\(formatted) kg"
     }
+
+    static func weight(_ kg: Double) -> String {
+        return formatWeight(kg)
+    }
     
     static func formatVolume(_ kg: Double) -> String {
         let formatter = NumberFormatter()

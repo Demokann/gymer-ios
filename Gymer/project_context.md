@@ -296,3 +296,25 @@ TabView (AppRouter)
 [2026-04-30] [Backend Dev] Components/Workout/SetRowView.swift — Integrated row component for logging sets with weight, reps, and type
 [2026-04-30] [Backend Dev] Components/Timer/RestTimerOverlay.swift — Full-screen rest timer with progress ring and adjustments
 [2026-04-30] [Backend Dev] ViewModels/ExerciseLibraryViewModel.swift — Manages exercise list, searching, and filtering by body region
+[03.05.2026] [Backend Dev] ViewModels/TemplateListViewModel.swift — Manages workout template list, deletion, and duplication
+[03.05.2026] [Backend Dev] ViewModels/TemplateEditorViewModel.swift — Handles creating and editing workout templates with exercise slots
+[03.05.2026] [Backend Dev] ViewModels/ActiveWorkoutViewModel.swift — Manages live workout state, set logging, and rest timer integration
+[03.05.2026] [Backend Dev] ViewModels/HistoryViewModel.swift — Fetches and groups workout sessions by month for history view
+[03.05.2026] [Backend Dev] ViewModels/HomeViewModel.swift — Calculates dashboard stats, streaks, and muscle group distribution
+[03.05.2026] [UI Designer] Views/Exercises/NewExerciseView.swift — Form for creating custom exercises with muscle group and equipment selection
+[04.05.2026] [UI Designer] Views/Exercises/ExerciseDetailView.swift — Detail view for exercises with personal records and volume history chart
+[04.05.2026] [UI Designer] Views/Exercises/ExerciseListView.swift — Searchable and filterable list of all exercises with alphabetical grouping
+[04.05.2026] [UI Designer] Views/StartWorkout/TemplateEditorView.swift — Editor for workout templates including name, emoji, color, and exercise slots with target settings
+[04.05.2026] [UI Designer] Views/StartWorkout/ActiveWorkoutView.swift — Live workout tracking screen with set logging, exercise management, and rest timer integration
+[04.05.2026] [UI Designer] Views/StartWorkout/WorkoutSummaryView.swift — Post-workout summary screen displaying key stats and new personal records
+[04.05.2026] [UI Designer] Views/StartWorkout/StartWorkoutView.swift — Workout initiation hub with template selection and quick start options
+[05.05.2026] [UI Designer] Views/History/WorkoutDetailView.swift — Detail view for completed workout sessions with exercise breakdown and PRs
+[05.05.2026] [UI Designer] Views/History/HistoryView.swift — Grouped list of past workout sessions with summary cards
+[05.05.2026] [UI Designer] Views/Profile/ProfileView.swift — User profile screen with workout stats, recent PRs, and muscle distribution chart
+[05.05.2026] [UI Designer] Views/MainTabView.swift — Root tab navigation with custom oversized centre button for starting workouts
+[05.05.2026] [Backend Dev] App/AppRouter.swift — Root navigation controller hosting the main tab view
+[05.05.2026] [Backend Dev] App/GymerApp.swift — App entry point with SwiftData container and global dark theme setup
+[07.05.2026] [Reviewer] Components/Common/BadgeLabel.swift — API güncellendi: BadgeType → Style enum, text/style parametreleri eklendi
+[07.05.2026] [Reviewer] Utilities/Formatters.swift — weight(_ kg: Double) static func eklendi
+[07.05.2026] [Reviewer] Views/MainTabView.swift — StartWorkoutView'a modelContext argümanı eklendi
+'[07.05.2026] [Reviewer] Views/StartWorkout/WorkoutSummaryView.swift — #Preview bloğu closure pattern ile yeniden yazıldı, return keyword ve SetLog setIndex parametresi düzeltildi'
