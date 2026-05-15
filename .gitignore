@@ -63,7 +63,7 @@ npm-debug.log*
 # Claude / AI artifacts
 prompt.md
 agents/
-images/
 
 # Project-specific notes (keep locally, not in repo)
 project_context.md
+GYMER_BUILD_PROMPT.md
