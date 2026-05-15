@@ -8,15 +8,15 @@ A personal iOS app I built to track my workouts, log weights and reps, and see m
 
 <table>
   <tr>
-    <td><img src="Gymer/images/IMG_4172.png" width="200" height="400"/></td>
-    <td><img src="Gymer/images/IMG_4173.png" width="200" height="400"/></td>
-    <td><img src="Gymer/images/IMG_4174.png" width="200" height="400"/></td>
-    <td><img src="Gymer/images/IMG_4175.png" width="200" height="400"/></td>
+    <td><img src="Gymer/images/IMG_4172.jpeg" width="200" height="400"/></td>
+    <td><img src="Gymer/images/IMG_4173.jpeg" width="200" height="400"/></td>
+    <td><img src="Gymer/images/IMG_4174.jpeg" width="200" height="400"/></td>
+    <td><img src="Gymer/images/IMG_4175.jpeg" width="200" height="400"/></td>
   </tr>
   <tr>
-    <td><img src="Gymer/images/IMG_4178.png" width="200" height="400"/></td>
-    <td><img src="Gymer/images/IMG_4179.png" width="200" height="400"/></td>
-    <td><img src="Gymer/images/IMG_4181.png" width="200" height="400"/></td>
+    <td><img src="Gymer/images/IMG_4178.jpeg" width="200" height="400"/></td>
+    <td><img src="Gymer/images/IMG_4179.jpeg" width="200" height="400"/></td>
+    <td><img src="Gymer/images/IMG_4181.jpeg" width="200" height="400"/></td>
     <td></td>
   </tr>
 </table>
