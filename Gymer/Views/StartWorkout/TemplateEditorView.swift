@@ -25,52 +25,100 @@ struct TemplateEditorView: View {
     
     var body: some View {
         NavigationStack {
-            Form {
-                Section {
-                    HStack(spacing: Spacing.md) {
-                        emojiPicker
-                        
-                        TextField("Template Name", text: $viewModel.name)
-                            .font(.headline)
-                            .foregroundColor(.gymWhite)
-                    }
-                    .listRowBackground(Color.gymSurface)
-                    
-                    colorPicker
-                        .listRowBackground(Color.gymSurface)
-                } header: {
-                    Text("Basic Info").foregroundColor(.gymMuted)
-                }
-                
-                Section {
-                    if viewModel.slots.isEmpty {
-                        Text("No exercises added yet.")
+            ScrollView {
+                VStack(spacing: Spacing.xl) {
+                    // Basic Info Section
+                    VStack(alignment: .leading, spacing: Spacing.md) {
+                        Text("Basic Info")
+                            .font(.caption)
                             .foregroundColor(.gymMuted)
-                            .font(.subheadline)
-                            .padding(.vertical, Spacing.sm)
-                    } else {
-                        ForEach(viewModel.slots) { slot in
-                            exerciseSlotRow(slot)
+                            .textCase(.uppercase)
+                            .padding(.leading, Spacing.sm)
+                        
+                        VStack(spacing: 0) {
+                            HStack(spacing: Spacing.md) {
+                                emojiPicker
+                                
+                                TextField("Template Name", text: $viewModel.name)
+                                    .font(.headline)
+                                    .foregroundColor(.gymWhite)
+                            }
+                            .padding()
+                            
+                            Divider()
+                                .background(Color.gymBorder)
+                                .padding(.leading)
+                            
+                            colorPicker
+                                .padding()
                         }
-                        .onDelete(perform: viewModel.removeSlot)
-                        .onMove(perform: viewModel.moveSlot)
+                        .background(Color.gymSurface)
+                        .cornerRadius(Radius.medium)
                     }
                     
-                    Button(action: { showingExercisePicker = true }) {
-                        Label("Add Exercise", systemImage: "plus")
-                            .fontWeight(.bold)
-                            .foregroundColor(.gymLime)
-                    }
-                } header: {
-                    HStack {
-                        Text("Exercises").foregroundColor(.gymMuted)
-                        Spacer()
-                        EditButton().font(.caption).foregroundColor(.gymLime)
+                    // Exercises Section
+                    VStack(alignment: .leading, spacing: Spacing.md) {
+                        HStack {
+                            Text("Exercises")
+                                .font(.caption)
+                                .foregroundColor(.gymMuted)
+                                .textCase(.uppercase)
+                            Spacer()
+                            EditButton().font(.caption).foregroundColor(.gymLime)
+                        }
+                        .padding(.horizontal, Spacing.sm)
+                        
+                        VStack(spacing: 0) {
+                            if viewModel.slots.isEmpty {
+                                Text("No exercises added yet.")
+                                    .foregroundColor(.gymMuted)
+                                    .font(.subheadline)
+                                    .padding()
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                            } else {
+                                ForEach(viewModel.slots) { slot in
+                                    VStack(spacing: 0) {
+                                        HStack {
+                                            exerciseSlotRow(slot)
+                                            
+                                            Button(role: .destructive) {
+                                                if let index = viewModel.slots.firstIndex(where: { $0.id == slot.id }) {
+                                                    viewModel.removeSlot(at: IndexSet(integer: index))
+                                                }
+                                            } label: {
+                                                Image(systemName: "trash")
+                                                    .foregroundColor(.gymRed)
+                                                    .padding(.leading, Spacing.sm)
+                                            }
+                                        }
+                                        .padding()
+                                        
+                                        if slot.id != viewModel.slots.last?.id {
+                                            Divider()
+                                                .background(Color.gymBorder)
+                                                .padding(.leading)
+                                        }
+                                    }
+                                }
+                            }
+                            
+                            Divider()
+                                .background(Color.gymBorder)
+                            
+                            Button(action: { showingExercisePicker = true }) {
+                                Label("Add Exercise", systemImage: "plus")
+                                    .fontWeight(.bold)
+                                    .foregroundColor(.gymLime)
+                                    .padding()
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                            }
+                        }
+                        .background(Color.gymSurface)
+                        .cornerRadius(Radius.medium)
                     }
                 }
-                .listRowBackground(Color.gymSurface)
+                .padding()
             }
-            .scrollContentBackground(.hidden)
             .background(Color.gymBlack)
             .navigationTitle(viewModel.isNewTemplate ? "New Template" : "Edit Template")
             .navigationBarTitleDisplayMode(.inline)
@@ -146,27 +194,27 @@ struct TemplateEditorView: View {
             Text(slot.exercise.name)
                 .font(.headline)
                 .foregroundColor(.gymWhite)
-            
+
             HStack(spacing: Spacing.lg) {
                 stepperField(label: "Sets", value: Binding(
                     get: { Double(slot.targetSets) },
                     set: { slot.targetSets = Int($0) }
                 ), range: 1...20, step: 1, format: "%.0f")
-                
+
                 stepperField(label: "Reps", value: Binding(
                     get: { Double(slot.targetReps) },
                     set: { slot.targetReps = Int($0) }
                 ), range: 0...100, step: 1, format: slot.targetReps == 0 ? "F" : "%.0f")
-                
-                stepperField(label: "Rest", value: Binding(
-                    get: { Double(slot.defaultRestSeconds) },
-                    set: { slot.defaultRestSeconds = Int($0) }
-                ), range: 0...600, step: 15, format: "%.0fs")
             }
+
+            RestTimerRowView(seconds: Binding(
+                get: { slot.defaultRestSeconds },
+                set: { slot.defaultRestSeconds = $0 }
+            ))
         }
         .padding(.vertical, Spacing.xs)
     }
-    
+
     private func stepperField(label: String, value: Binding<Double>, range: ClosedRange<Double>, step: Double, format: String) -> some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(label)

@@ -1,86 +1,85 @@
 // MARK: - MainTabView
 // Owner: UI Designer Agent
-// Last Modified: 05.05.2026
-// Dependencies: ProfileView, HistoryView, StartWorkoutView, ExerciseListView, Color, Spacing
+// Last Modified: 2026-05-15
+// Dependencies: ProfileView, StartWorkoutView, ExerciseListView, Color, Spacing
 
 import SwiftUI
 import SwiftData
 
 struct MainTabView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(TimerService.self) private var timerService
+    // 0=Profile, 1=StartWorkout, 2=Exercises
     @State private var selectedTab: Int = 0
-    @State private var isShowingStartWorkout = false
-    
+
     var body: some View {
         ZStack(alignment: .bottom) {
-            // Main Content
             TabView(selection: $selectedTab) {
                 ProfileView(modelContext: modelContext)
                     .tag(0)
-                
-                HistoryView(modelContext: modelContext)
+
+                StartWorkoutView(modelContext: modelContext)
                     .tag(1)
-                
-                // Placeholder for the centre button action
-                Color.gymBlack
-                    .tag(2)
-                
+
                 ExerciseListView()
-                    .tag(3)
+                    .tag(2)
             }
-            
-            // Custom Tab Bar Background
+            .tabViewStyle(.page(indexDisplayMode: .never))
+            .ignoresSafeArea(edges: .bottom)
+
+            // Custom Tab Bar
             VStack(spacing: 0) {
                 Divider()
                     .background(Color.gymBorder)
-                
-                HStack(spacing: 0) {
-                    tabItem(index: 0, icon: "person.fill", label: "Profile")
-                    tabItem(index: 1, icon: "clock.fill", label: "History")
-                    // Equal-width placeholder keeps centre button exactly mid-screen
-                    Color.clear.frame(maxWidth: .infinity)
-                    tabItem(index: 3, icon: "dumbbell.fill", label: "Exercises")
+
+                HStack {
+                    tabButton(title: "Profile", icon: "person.fill", index: 0)
+
+                    Spacer() // Space for the centre button
+                        .frame(width: 80)
+
+                    tabButton(title: "Exercises", icon: "figure.strengthtraining.traditional", index: 2)
                 }
-                .padding(.top, Spacing.sm)
-                .padding(.bottom, 34) // Safe area bottom approx
-                .background(Color.gymSurface)
+                .padding(.horizontal, Spacing.xl)
+                .frame(height: 60)
+                .background(Color.gymBlack.opacity(0.95))
             }
-            
-            // Oversized Centre Button
+
+            // Centre START WORKOUT button — tapping navigates to the Start Workout tab
             Button {
-                isShowingStartWorkout = true
+                withAnimation {
+                    selectedTab = 1
+                }
             } label: {
                 ZStack {
                     Circle()
-                        .fill(Color.gymLime)
+                        .fill(selectedTab == 1 ? Color.gymLime.opacity(0.85) : Color.gymLime)
                         .frame(width: 56, height: 56)
                         .shadow(color: Color.black.opacity(0.3), radius: 10, x: 0, y: 5)
-                    
+
                     Image(systemName: "dumbbell.fill")
                         .font(.system(size: 24, weight: .bold))
                         .foregroundStyle(Color.black)
                 }
             }
-            .offset(y: -20) // Lift above the tab bar
-        }
-        .ignoresSafeArea(edges: .bottom)
-        .fullScreenCover(isPresented: $isShowingStartWorkout) {
-            StartWorkoutView(modelContext: modelContext)
+            .offset(y: -34)
         }
     }
-    
-    private func tabItem(index: Int, icon: String, label: String) -> some View {
+
+    private func tabButton(title: String, icon: String, index: Int) -> some View {
         Button {
-            selectedTab = index
+            withAnimation {
+                selectedTab = index
+            }
         } label: {
             VStack(spacing: 4) {
                 Image(systemName: icon)
                     .font(.system(size: 20))
-                Text(label)
-                    .gymFont(.caption)
+                Text(title)
+                    .font(.system(size: 10, weight: .medium))
             }
+            .foregroundColor(selectedTab == index ? .gymLime : .gymMuted)
             .frame(maxWidth: .infinity)
-            .foregroundStyle(selectedTab == index ? Color.gymLime : Color.gymMuted)
         }
     }
 }
@@ -88,7 +87,9 @@ struct MainTabView: View {
 #Preview {
     let config = ModelConfiguration(isStoredInMemoryOnly: true)
     let container = try! ModelContainer(for: WorkoutSession.self, WorkoutTemplate.self, ExerciseSlot.self, SetLog.self, Exercise.self, configurations: config)
-    
+    let timerService = TimerService()
+
     return MainTabView()
         .modelContainer(container)
+        .environment(timerService)
 }

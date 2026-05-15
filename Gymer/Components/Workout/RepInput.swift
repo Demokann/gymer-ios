@@ -11,19 +11,19 @@ struct RepInput: View {
     let label: String
     
     var body: some View {
-        VStack(alignment: .center, spacing: Spacing.xs) {
+        VStack(alignment: .center, spacing: 2) {
             Text(label)
-                .gymFont(.caption)
+                .font(.system(size: 10, weight: .bold))
                 .foregroundColor(.gymMuted)
             
-            HStack(spacing: Spacing.sm) {
+            HStack(spacing: 4) {
                 Button {
                     adjustReps(by: -1)
                 } label: {
                     Image(systemName: "minus")
-                        .font(.system(size: 14, weight: .bold))
+                        .font(.system(size: 12, weight: .bold))
                         .foregroundColor(.gymLime)
-                        .frame(width: 32, height: 32)
+                        .frame(width: 28, height: 28)
                         .background(Color.gymSurface)
                         .clipShape(Circle())
                 }
@@ -31,11 +31,11 @@ struct RepInput: View {
                 ZStack {
                     TextField("0", value: $reps, format: .number)
                         .keyboardType(.numberPad)
-                        .gymFont(.mono)
+                        .font(.system(.body, design: .monospaced))
                         .foregroundColor(isFailure ? .gymMuted : .gymWhite)
                         .multilineTextAlignment(.center)
-                        .frame(width: 50)
-                        .padding(.vertical, Spacing.xs)
+                        .frame(width: 44)
+                        .padding(.vertical, 4)
                         .background(Color.gymCard)
                         .cornerRadius(Radius.small)
                         .opacity(isFailure ? 0.3 : 1.0)
@@ -43,7 +43,7 @@ struct RepInput: View {
                     
                     if isFailure {
                         Text("FAIL")
-                            .gymFont(.mono)
+                            .font(.system(size: 12, weight: .bold, design: .monospaced))
                             .foregroundColor(.gymRed)
                     }
                 }
@@ -52,9 +52,9 @@ struct RepInput: View {
                     adjustReps(by: 1)
                 } label: {
                     Image(systemName: "plus")
-                        .font(.system(size: 14, weight: .bold))
+                        .font(.system(size: 12, weight: .bold))
                         .foregroundColor(.gymLime)
-                        .frame(width: 32, height: 32)
+                        .frame(width: 28, height: 28)
                         .background(Color.gymSurface)
                         .clipShape(Circle())
                 }
@@ -65,11 +65,10 @@ struct RepInput: View {
                         reps = 0
                     }
                 } label: {
-                    Text("FAIL")
-                        .gymFont(.caption)
+                    Text("F")
+                        .font(.system(size: 12, weight: .bold))
                         .foregroundColor(isFailure ? .gymWhite : .gymRed)
-                        .padding(.horizontal, Spacing.sm)
-                        .padding(.vertical, 6)
+                        .frame(width: 28, height: 28)
                         .background(isFailure ? Color.gymRed : Color.clear)
                         .cornerRadius(Radius.small)
                         .overlay(

@@ -58,12 +58,10 @@ class HistoryViewModel {
     }
     
     func deleteSession(_ session: WorkoutSession) {
-        modelContext.delete(session)
-        do {
-            try modelContext.save()
-            fetchHistory()
-        } catch {
-            print("❌ Error deleting session: \(error)")
-        }
+        // Optimistic remove from local state so the animation is immediate
+        sessions.removeAll { $0.id == session.id }
+        groupSessions()
+        // Persist the deletion
+        DataService.shared.deleteSession(session, context: modelContext)
     }
 }

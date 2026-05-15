@@ -55,12 +55,12 @@ enum Equipment: String, Codable, CaseIterable {
     
     var icon: String {
         switch self {
-        case .barbell: return "barbell"
-        case .dumbbell: return "dumbbell"
+        case .barbell: return "dumbbell.fill"
+        case .dumbbell: return "dumbbell.fill"
         case .cable: return "cable.connector"
         case .machine: return "gearshape.2"
         case .bodyweight: return "figure.walk"
-        case .kettlebell: return "kettlebell"
+        case .kettlebell: return "scalemass.fill"
         case .band: return "point.topleft.down.curvedto.point.bottomright.up"
         case .other: return "questionmark.circle"
         }

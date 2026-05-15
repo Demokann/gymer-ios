@@ -57,9 +57,22 @@ class ActiveWorkoutViewModel {
         self.workoutSession = session
         
         if let template = template {
-            self.exerciseStates = template.slots.sorted(by: { $0.order < $1.order }).map { slot in
-                let initialSets = (1...slot.targetSets).map { _ in
-                    SetState(weightKg: slot.targetWeightKg, reps: slot.targetReps)
+            let slots = template.slots  // explicit access triggers SwiftData relationship fault
+            if slots.isEmpty {
+                print("⚠️ Template '\(template.name)' has no slots — relationship may not have loaded")
+            }
+            let lastSession = dataService.lastSession(for: template, context: modelContext)
+            self.exerciseStates = slots.sorted(by: { $0.order < $1.order }).compactMap { slot in
+                let setCount = max(1, slot.targetSets)
+                let previousLogs = (lastSession?.setLogs ?? [])
+                    .filter { $0.exerciseName == slot.exercise.name }
+                    .sorted { $0.setIndex < $1.setIndex }
+                let initialSets = (0..<setCount).map { i in
+                    if i < previousLogs.count {
+                        let log = previousLogs[i]
+                        return SetState(weightKg: log.weightKg, reps: log.reps, type: log.setType, isFailure: log.isFailure)
+                    }
+                    return SetState(weightKg: slot.targetWeightKg, reps: slot.targetReps)
                 }
                 return ExerciseState(exercise: slot.exercise, sets: initialSets, defaultRestSeconds: slot.defaultRestSeconds)
             }
@@ -70,11 +83,12 @@ class ActiveWorkoutViewModel {
     
     // MARK: - Timer Logic
     private func startTimer() {
-        timerTask = Task {
+        timerTask = Task { [weak self] in
+            guard let self else { return }
             while !Task.isCancelled {
                 try? await Task.sleep(nanoseconds: 1_000_000_000)
                 if !Task.isCancelled {
-                    elapsedTime = Int(Date().timeIntervalSince(startTime))
+                    self.elapsedTime = Int(Date().timeIntervalSince(self.startTime))
                 }
             }
         }
@@ -88,49 +102,60 @@ class ActiveWorkoutViewModel {
         var exerciseState = exerciseStates[exerciseIndex]
         var setState = exerciseState.sets[setIndex]
         
-        guard !setState.isCompleted else { return }
-        
-        setState.isCompleted = true
-        setState.completedAt = Date()
-        exerciseState.sets[setIndex] = setState
-        exerciseStates[exerciseIndex] = exerciseState
-        
-        // Log to SwiftData immediately
-        let log = SetLog(
-            exercise: exerciseState.exercise,
-            exerciseName: exerciseState.exercise.name,
-            setIndex: setIndex + 1,
-            setType: setState.type,
-            weightKg: setState.weightKg,
-            reps: setState.reps,
-            isFailure: setState.isFailure,
-            completedAt: setState.completedAt ?? Date()
-        )
-        
-        // Check for PR
-        if let best = dataService.personalRecord(for: exerciseState.exercise, context: modelContext) {
-            let currentVolume = setState.isFailure ? 0 : setState.weightKg * Double(setState.reps)
-            let bestVolume = best.isFailure ? 0 : best.weightKg * Double(best.reps)
-            if currentVolume > bestVolume {
-                log.isPersonalRecord = true
+        if setState.isCompleted {
+            // Uncomplete
+            setState.isCompleted = false
+            setState.completedAt = nil
+            
+            // Find and remove the log from session
+            if let session = workoutSession {
+                session.setLogs.removeAll { log in
+                    log.exerciseName == exerciseState.exercise.name && 
+                    log.setIndex == setIndex + 1 &&
+                    Calendar.current.isDate(log.completedAt, inSameDayAs: startTime)
+                }
             }
         } else {
-            // First time doing this exercise
-            log.isPersonalRecord = !setState.isFailure
+            // Complete
+            setState.isCompleted = true
+            setState.completedAt = Date()
+            
+            // Log to SwiftData immediately
+            let log = SetLog(
+                exercise: exerciseState.exercise,
+                exerciseName: exerciseState.exercise.name,
+                setIndex: setIndex + 1,
+                setType: setState.type,
+                weightKg: setState.weightKg,
+                reps: setState.reps,
+                isFailure: setState.isFailure,
+                completedAt: setState.completedAt ?? Date()
+            )
+            
+            // Check for PR
+            if let best = dataService.personalRecord(for: exerciseState.exercise, context: modelContext) {
+                let currentVolume = setState.isFailure ? 0 : setState.weightKg * Double(setState.reps)
+                let bestVolume = best.isFailure ? 0 : best.weightKg * Double(best.reps)
+                if currentVolume > bestVolume {
+                    log.isPersonalRecord = true
+                }
+            } else {
+                log.isPersonalRecord = !setState.isFailure
+            }
+            
+            workoutSession?.setLogs.append(log)
+            
+            // Start rest timer
+            timerService.start(seconds: exerciseState.defaultRestSeconds) { }
         }
         
-        // Associate with session
-        workoutSession?.setLogs.append(log)
+        exerciseState.sets[setIndex] = setState
+        exerciseStates[exerciseIndex] = exerciseState
         
         do {
             try modelContext.save()
         } catch {
             print("❌ Error saving set log: \(error)")
-        }
-        
-        // Start rest timer
-        timerService.start(seconds: exerciseState.defaultRestSeconds) {
-            // Optional completion handler
         }
     }
     
@@ -145,12 +170,32 @@ class ActiveWorkoutViewModel {
         exerciseStates[exerciseIndex].sets.append(newSet)
     }
     
-    func removeSet(from exerciseIndex: Int, at setIndex: Int) {
-        guard exerciseIndex < exerciseStates.count,
-              setIndex < exerciseStates[exerciseIndex].sets.count else { return }
-        exerciseStates[exerciseIndex].sets.remove(at: setIndex)
+    func removeSet(setId: UUID, exerciseId: UUID) {
+        guard let exIdx = exerciseStates.firstIndex(where: { $0.id == exerciseId }),
+              let setIdx = exerciseStates[exIdx].sets.firstIndex(where: { $0.id == setId })
+        else { return }
+        exerciseStates[exIdx].sets.remove(at: setIdx)
     }
-    
+
+    func removeExercise(id: UUID) {
+        guard let index = exerciseStates.firstIndex(where: { $0.id == id }) else { return }
+        let exerciseName = exerciseStates[index].exercise.name
+
+        if let session = workoutSession {
+            let toDelete = session.setLogs.filter { $0.exerciseName == exerciseName }
+            toDelete.forEach { modelContext.delete($0) }
+            session.setLogs.removeAll { $0.exerciseName == exerciseName }
+        }
+
+        exerciseStates.remove(at: index)
+
+        do {
+            try modelContext.save()
+        } catch {
+            print("❌ Error removing exercise: \(error)")
+        }
+    }
+
     func addExercise(_ exercise: Exercise) {
         let newState = ExerciseState(
             exercise: exercise,
@@ -183,14 +228,26 @@ class ActiveWorkoutViewModel {
               setIndex < exerciseStates[exerciseIndex].sets.count else { return }
         exerciseStates[exerciseIndex].sets[setIndex].isFailure.toggle()
     }
+
+    func adjustRestSeconds(by delta: Int, for exerciseIndex: Int) {
+        guard exerciseIndex < exerciseStates.count else { return }
+        let current = exerciseStates[exerciseIndex].defaultRestSeconds
+        exerciseStates[exerciseIndex].defaultRestSeconds = max(15, min(300, current + delta))
+    }
+
+    func setRestSeconds(_ seconds: Int, for exerciseIndex: Int) {
+        guard exerciseIndex < exerciseStates.count else { return }
+        exerciseStates[exerciseIndex].defaultRestSeconds = max(15, min(300, seconds))
+    }
     
     func finishWorkout(notes: String = "") {
         timerTask?.cancel()
-        
+        timerTask = nil
+
         if let session = workoutSession {
             session.finishedAt = Date()
             session.notes = notes
-            
+
             do {
                 try modelContext.save()
                 isFinished = true
@@ -199,4 +256,5 @@ class ActiveWorkoutViewModel {
             }
         }
     }
+
 }

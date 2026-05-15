@@ -1,6 +1,6 @@
 // MARK: - SetRowView
 // Owner: UI Designer Agent
-// Last Modified: 2026-04-30
+// Last Modified: 2026-05-15
 // Dependencies: SetType, WeightInput, RepInput, BadgeLabel, SetTypeSelector
 
 import SwiftUI
@@ -11,20 +11,75 @@ struct SetRowView: View {
     @Binding var reps: Int
     @Binding var isFailure: Bool
     @Binding var isCompleted: Bool
-    
+
     let setIndex: Int
     let onComplete: () -> Void
-    
+    var onDelete: (() -> Void)? = nil
+
     @State private var showingTypeSelector = false
-    
+    @State private var swipeOffset: CGFloat = 0
+
+    private let deleteRevealWidth: CGFloat = 68
+
     var body: some View {
-        HStack(spacing: Spacing.md) {
+        ZStack(alignment: .trailing) {
+            if onDelete != nil {
+                Button {
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                        swipeOffset = 0
+                    }
+                    onDelete?()
+                } label: {
+                    Image(systemName: "trash.fill")
+                        .foregroundColor(.white)
+                        .frame(width: deleteRevealWidth)
+                        .frame(maxHeight: .infinity)
+                        .background(Color.gymRed)
+                        .cornerRadius(Radius.medium)
+                }
+                .opacity(swipeOffset < -8 ? 1 : 0)
+            }
+
+            rowContent
+                .offset(x: swipeOffset)
+                .gesture(
+                    onDelete != nil
+                        ? DragGesture(minimumDistance: 15, coordinateSpace: .local)
+                            .onChanged { value in
+                                let x = value.translation.width
+                                if x < 0 {
+                                    swipeOffset = max(-deleteRevealWidth, x)
+                                } else if swipeOffset < 0 {
+                                    swipeOffset = min(0, swipeOffset + x)
+                                }
+                            }
+                            .onEnded { _ in
+                                withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                                    swipeOffset = swipeOffset < -(deleteRevealWidth / 2)
+                                        ? -deleteRevealWidth
+                                        : 0
+                                }
+                            }
+                        : nil
+                )
+        }
+        .clipped()
+        .sheet(isPresented: $showingTypeSelector) {
+            SetTypeSelector(selectedType: $setType) {
+                showingTypeSelector = false
+            }
+            .presentationDetents([.height(350)])
+        }
+    }
+
+    private var rowContent: some View {
+        HStack(spacing: 8) {
             // Set Index & Type Badge
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 2) {
                 Text("SET \(setIndex)")
-                    .gymFont(.caption)
+                    .font(.system(size: 8, weight: .bold))
                     .foregroundColor(.gymMuted)
-                
+
                 Button {
                     showingTypeSelector = true
                 } label: {
@@ -34,13 +89,12 @@ struct SetRowView: View {
                             .frame(width: 24, height: 24)
                             .overlay(
                                 Text("\(setIndex)")
-                                    .gymFont(.caption)
+                                    .font(.system(size: 10, weight: .bold))
                                     .foregroundColor(.gymWhite)
                             )
                     } else {
                         Text(setType.abbreviation)
-                            .gymFont(.caption)
-                            .fontWeight(.bold)
+                            .font(.system(size: 10, weight: .bold))
                             .foregroundColor(setType.color)
                             .frame(width: 24, height: 24)
                             .background(setType.color.opacity(0.2))
@@ -48,22 +102,18 @@ struct SetRowView: View {
                     }
                 }
             }
-            .frame(width: 40)
-            
+            .frame(width: 32)
+
             // Weight Input
             WeightInput(weight: $weightKg, label: "WEIGHT")
                 .disabled(isCompleted)
                 .opacity(isCompleted ? 0.6 : 1.0)
-            
-            Spacer(minLength: 0)
-            
+
             // Rep Input
             RepInput(reps: $reps, isFailure: $isFailure, label: "REPS")
                 .disabled(isCompleted)
                 .opacity(isCompleted ? 0.6 : 1.0)
-            
-            Spacer(minLength: 0)
-            
+
             // Completion Button
             Button {
                 withAnimation(.spring) {
@@ -74,21 +124,15 @@ struct SetRowView: View {
                 }
             } label: {
                 Image(systemName: isCompleted ? "checkmark.circle.fill" : "circle")
-                    .font(.system(size: 28))
+                    .font(.system(size: 24))
                     .foregroundColor(isCompleted ? .gymLime : .gymBorder)
-                    .frame(width: 44, height: 44)
+                    .frame(width: 40, height: 40)
             }
         }
-        .padding(.vertical, Spacing.sm)
-        .padding(.horizontal, Spacing.md)
+        .padding(.vertical, 4)
+        .padding(.horizontal, 8)
         .background(isCompleted ? Color.gymLime.opacity(0.05) : Color.clear)
         .cornerRadius(Radius.medium)
-        .sheet(isPresented: $showingTypeSelector) {
-            SetTypeSelector(selectedType: $setType) {
-                showingTypeSelector = false
-            }
-            .presentationDetents([.height(350)])
-        }
     }
 }
 
@@ -99,7 +143,7 @@ struct SetRowView: View {
         @State var reps: Int = 10
         @State var isFailure: Bool = false
         @State var isCompleted: Bool = false
-        
+
         var body: some View {
             ZStack {
                 Color.gymBlack.ignoresSafeArea()
@@ -111,9 +155,10 @@ struct SetRowView: View {
                         isFailure: $isFailure,
                         isCompleted: $isCompleted,
                         setIndex: 1,
-                        onComplete: { print("Set completed!") }
+                        onComplete: { print("Set completed!") },
+                        onDelete: { print("Deleted!") }
                     )
-                    
+
                     SetRowView(
                         setType: .constant(.warmUp),
                         weightKg: .constant(40.0),
@@ -121,16 +166,6 @@ struct SetRowView: View {
                         isFailure: .constant(false),
                         isCompleted: .constant(true),
                         setIndex: 2,
-                        onComplete: {}
-                    )
-                    
-                    SetRowView(
-                        setType: .constant(.dropSet),
-                        weightKg: .constant(60.0),
-                        reps: .constant(8),
-                        isFailure: .constant(true),
-                        isCompleted: .constant(false),
-                        setIndex: 3,
                         onComplete: {}
                     )
                 }

@@ -29,7 +29,33 @@ class DataService {
             print("❌ Error deleting template: \(error)")
         }
     }
+
+    func deleteSession(_ session: WorkoutSession, context: ModelContext) {
+        for log in session.setLogs {
+            context.delete(log)
+        }
+        context.delete(session)
+        do {
+            try context.save()
+        } catch {
+            print("❌ Error deleting workout session: \(error)")
+        }
+    }
     
+    func lastSession(for template: WorkoutTemplate, context: ModelContext) -> WorkoutSession? {
+        let descriptor = FetchDescriptor<WorkoutSession>(
+            predicate: #Predicate { $0.finishedAt != nil },
+            sortBy: [SortDescriptor(\.finishedAt, order: .reverse)]
+        )
+        do {
+            let sessions = try context.fetch(descriptor)
+            return sessions.first { $0.template?.id == template.id }
+        } catch {
+            print("❌ Error fetching last session: \(error)")
+            return nil
+        }
+    }
+
     func personalRecord(for exercise: Exercise, context: ModelContext) -> SetLog? {
         let exerciseName = exercise.name
         let descriptor = FetchDescriptor<SetLog>(

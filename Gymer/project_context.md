@@ -312,9 +312,29 @@ TabView (AppRouter)
 [05.05.2026] [UI Designer] Views/History/HistoryView.swift — Grouped list of past workout sessions with summary cards
 [05.05.2026] [UI Designer] Views/Profile/ProfileView.swift — User profile screen with workout stats, recent PRs, and muscle distribution chart
 [05.05.2026] [UI Designer] Views/MainTabView.swift — Root tab navigation with custom oversized centre button for starting workouts
-[05.05.2026] [Backend Dev] App/AppRouter.swift — Root navigation controller hosting the main tab view
-[05.05.2026] [Backend Dev] App/GymerApp.swift — App entry point with SwiftData container and global dark theme setup
-[07.05.2026] [Reviewer] Components/Common/BadgeLabel.swift — API güncellendi: BadgeType → Style enum, text/style parametreleri eklendi
-[07.05.2026] [Reviewer] Utilities/Formatters.swift — weight(_ kg: Double) static func eklendi
-[07.05.2026] [Reviewer] Views/MainTabView.swift — StartWorkoutView'a modelContext argümanı eklendi
-'[07.05.2026] [Reviewer] Views/StartWorkout/WorkoutSummaryView.swift — #Preview bloğu closure pattern ile yeniden yazıldı, return keyword ve SetLog setIndex parametresi düzeltildi'
+[2026-05-10] [UI Designer] Views/MainTabView.swift — Fixed tab bar layout to match spec (3 tabs + ZStack centre button)
+[2026-05-10] [UI Designer] Views/StartWorkout/StartWorkoutView.swift — Added template list refresh on editor dismissal
+[2026-05-10] [UI Designer] Views/StartWorkout/TemplateEditorView.swift — Replaced Form with ScrollView to fix field clipping
+[2026-05-10] [UI Designer] Components/Workout/WeightInput.swift — Compacted layout for smaller screens
+[2026-05-10] [UI Designer] Components/Workout/RepInput.swift — Compacted layout and optimized FAIL button
+[2026-05-10] [UI Designer] Components/Workout/SetRowView.swift — Compacted layout to prevent horizontal overflow
+[2026-05-10] [UI Designer] Views/History/HistoryView.swift — Extracted HistoryListView for reusability.
+[2026-05-10] [UI Designer] Views/StartWorkout/StartWorkoutView.swift — Added segmented picker for Workouts/History segments.
+[2026-05-10] [UI Designer] Views/MainTabView.swift — Removed History tab, updated to 3-item tab bar layout.
+[2026-05-13] [UI Designer] Views/MainTabView.swift — Added horizontal swipe navigation between tabs using .page style and implemented custom tab bar.
+[2026-05-13] [UI Designer] Views/StartWorkout/ActiveWorkoutView.swift — Fixed set completion binding to correctly trigger VM.
+[2026-05-13] [Backend Dev] ViewModels/ActiveWorkoutViewModel.swift — Updated completeSet to support toggling and robust log management.
+[2026-05-15] [UI Designer] Views/MainTabView.swift — Fixed swipe navigation to include all 3 tabs (0=Profile, 1=StartWorkout, 2=Exercises); dumbbell button now sets selectedTab=1; removed duplicate #Preview.
+[2026-05-15] [UI Designer] Components/Timer/RestTimerOverlay.swift — Reduced to compact .height(280) sheet; ring shrunk to 120pt; auto-dismiss after 0.5s when timer reaches 0.
+[2026-05-15] [UI Designer] Views/StartWorkout/ActiveWorkoutView.swift — Updated RestTimerOverlay to .height(280) detent; added per-exercise rest timer row [−15s][M:SS][+15s].
+[2026-05-15] [UI Designer] Views/StartWorkout/TemplateEditorView.swift — Replaced Rest stepper with compact rest timer row [−15s][M:SS][+15s] per exercise slot.
+[2026-05-15] [Backend Dev] ViewModels/ActiveWorkoutViewModel.swift — Added adjustRestSeconds(by:for:); added deinit to cancel elapsed-timer Task; added [weak self] in startTimer closure.
+[2026-05-15] [reviewer] Services/TimerService.swift — Extracted makeTimerTask to eliminate duplicated start/resume logic; added [weak self] to prevent retain cycle; added deinit to cancel outstanding task.
+[2026-05-15] [Backend Dev] Services/DataService.swift — Added deleteSession(_:context:) that explicitly deletes all SetLogs then the session.
+[2026-05-15] [Backend Dev] ViewModels/HistoryViewModel.swift — deleteSession now delegates to DataService.shared.deleteSession for proper cascade cleanup.
+[2026-05-15] [Backend Dev] ViewModels/ActiveWorkoutViewModel.swift — Added setRestSeconds(_:for:) for absolute binding support in RestTimerRowView.
+[2026-05-15] [UI Designer] Views/History/HistoryView.swift — Swipe-to-delete now shows confirmation alert; added long-press context menu with Delete option; list updates immediately after confirm.
+[2026-05-15] [UI Designer] Components/Timer/RestTimerOverlay.swift — Time display is now tappable; inline TextField + Set button to manually enter seconds; confirms via timerService.adjust().
+[2026-05-15] [UI Designer] Components/Workout/RestTimerRowView.swift — New reusable component: [−15s][M:SS tap-to-edit][+15s] with inline TextField + Set confirmation.
+[2026-05-15] [UI Designer] Views/StartWorkout/TemplateEditorView.swift — Replaced custom restTimerRow with shared RestTimerRowView component; removed duplicate private function.
+[2026-05-15] [UI Designer] Views/StartWorkout/ActiveWorkoutView.swift — Replaced custom restTimerRow with shared RestTimerRowView component; uses setRestSeconds Binding via ViewModel.

@@ -1,6 +1,6 @@
 // MARK: - ActiveWorkoutView
 // Owner: UI Designer Agent
-// Last Modified: 04.05.2026
+// Last Modified: 2026-05-15
 // Dependencies: ActiveWorkoutViewModel, SetRowView, RestTimerOverlay, ExercisePickerView, Formatters
 
 import SwiftUI
@@ -17,6 +17,7 @@ struct ActiveWorkoutView: View {
     @State private var showingFinishConfirmation = false
     @State private var showingCancelConfirmation = false
     @State private var workoutNotes = ""
+    @State private var collapsedExercises: Set<UUID> = []
     
     // MARK: - Initialization
     init(modelContext: ModelContext, timerService: TimerService, template: WorkoutTemplate? = nil) {
@@ -77,7 +78,8 @@ struct ActiveWorkoutView: View {
             }
             .sheet(isPresented: $showingRestTimer) {
                 RestTimerOverlay()
-                    .presentationDetents([.medium])
+                    .presentationDetents([.height(280)])
+                    .presentationDragIndicator(.visible)
             }
             .fullScreenCover(isPresented: $viewModel.isFinished) {
                 if let session = viewModel.workoutSession {
@@ -108,27 +110,62 @@ struct ActiveWorkoutView: View {
     // MARK: - Subviews
     
     private func exerciseSection(exerciseIndex: Int, exerciseState: ExerciseState) -> some View {
-        VStack(alignment: .leading, spacing: Spacing.md) {
-            HStack {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(exerciseState.exercise.name)
-                        .font(.title3)
-                        .fontWeight(.bold)
-                        .foregroundColor(.gymWhite)
-                    
-                    HStack(spacing: Spacing.xs) {
-                        ForEach(exerciseState.exercise.bodyRegions.prefix(2), id: \.self) { region in
-                            BadgeLabel(text: region.displayName, style: .system)
+        let isCollapsed = collapsedExercises.contains(exerciseState.id)
+
+        return VStack(alignment: .leading, spacing: Spacing.md) {
+
+            // Header — left side is tappable to collapse/expand
+            HStack(spacing: 0) {
+                Button {
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                        if isCollapsed {
+                            collapsedExercises.remove(exerciseState.id)
+                        } else {
+                            collapsedExercises.insert(exerciseState.id)
                         }
                     }
+                } label: {
+                    HStack {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(exerciseState.exercise.name)
+                                .font(.title3)
+                                .fontWeight(.bold)
+                                .foregroundColor(.gymWhite)
+
+                            if isCollapsed {
+                                Text("\(exerciseState.sets.count) sets")
+                                    .font(.caption)
+                                    .foregroundColor(.gymMuted)
+                            } else {
+                                HStack(spacing: Spacing.xs) {
+                                    ForEach(exerciseState.exercise.bodyRegions.prefix(2), id: \.self) { region in
+                                        BadgeLabel(text: region.displayName, style: .system)
+                                    }
+                                }
+                            }
+                        }
+
+                        Spacer()
+
+                        Image(systemName: "chevron.down")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundColor(.gymMuted)
+                            .rotationEffect(.degrees(isCollapsed ? 0 : 180))
+                            .animation(.spring(response: 0.3, dampingFraction: 0.8), value: isCollapsed)
+                            .padding(.trailing, Spacing.xs)
+                    }
+                    .contentShape(Rectangle())
                 }
-                
-                Spacer()
-                
+                .buttonStyle(.plain)
+
                 Menu {
-                    Button(role: .destructive, action: { 
-                        // Add remove exercise logic to VM if needed
-                    }) {
+                    Button(role: .destructive) {
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                            let eid = exerciseState.id
+                            collapsedExercises.remove(eid)
+                            viewModel.removeExercise(id: eid)
+                        }
+                    } label: {
                         Label("Remove Exercise", systemImage: "trash")
                     }
                 } label: {
@@ -137,47 +174,65 @@ struct ActiveWorkoutView: View {
                         .padding(Spacing.sm)
                 }
             }
-            
-            VStack(spacing: Spacing.sm) {
-                ForEach(Array(exerciseState.sets.enumerated()), id: \.1.id) { setIndex, setState in
-                    SetRowView(
-                        setType: Binding(
-                            get: { setState.type },
-                            set: { viewModel.updateSetType($0, for: exerciseIndex, setIndex: setIndex) }
-                        ),
-                        weightKg: Binding(
-                            get: { setState.weightKg },
-                            set: { viewModel.updateWeight($0, for: exerciseIndex, setIndex: setIndex) }
-                        ),
-                        reps: Binding(
-                            get: { setState.reps },
-                            set: { viewModel.updateReps($0, for: exerciseIndex, setIndex: setIndex) }
-                        ),
-                        isFailure: Binding(
-                            get: { setState.isFailure },
-                            set: { _ in viewModel.toggleFailure(for: exerciseIndex, setIndex: setIndex) }
-                        ),
-                        isCompleted: Binding(
-                            get: { setState.isCompleted },
-                            set: { _ in }
-                        ),
-                        setIndex: setIndex + 1,
-                        onComplete: {
-                            viewModel.completeSet(exerciseIndex: exerciseIndex, setIndex: setIndex)
-                        }
-                    )
+
+            // Collapsible body
+            if !isCollapsed {
+                VStack(spacing: 0) {
+                    ForEach(Array(exerciseState.sets.enumerated()), id: \.1.id) { setIndex, setState in
+                        SetRowView(
+                            setType: Binding(
+                                get: { setState.type },
+                                set: { viewModel.updateSetType($0, for: exerciseIndex, setIndex: setIndex) }
+                            ),
+                            weightKg: Binding(
+                                get: { setState.weightKg },
+                                set: { viewModel.updateWeight($0, for: exerciseIndex, setIndex: setIndex) }
+                            ),
+                            reps: Binding(
+                                get: { setState.reps },
+                                set: { viewModel.updateReps($0, for: exerciseIndex, setIndex: setIndex) }
+                            ),
+                            isFailure: Binding(
+                                get: { setState.isFailure },
+                                set: { _ in viewModel.toggleFailure(for: exerciseIndex, setIndex: setIndex) }
+                            ),
+                            isCompleted: Binding(
+                                get: { setState.isCompleted },
+                                set: { _ in viewModel.completeSet(exerciseIndex: exerciseIndex, setIndex: setIndex) }
+                            ),
+                            setIndex: setIndex + 1,
+                            onComplete: { },
+                            onDelete: {
+                                withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                                    viewModel.removeSet(setId: setState.id, exerciseId: exerciseState.id)
+                                }
+                            }
+                        )
+                        .padding(.vertical, 2)
+                    }
                 }
-            }
-            
-            Button(action: { viewModel.addSet(to: exerciseIndex) }) {
-                Label("Add Set", systemImage: "plus.circle.fill")
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                    .foregroundColor(.gymMuted)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, Spacing.sm)
-                    .background(Color.gymSurface)
-                    .cornerRadius(Radius.small)
+                .transition(.opacity.combined(with: .move(edge: .top)))
+
+                RestTimerRowView(seconds: Binding(
+                    get: {
+                        guard let idx = viewModel.exerciseStates.firstIndex(where: { $0.id == exerciseState.id }) else { return 90 }
+                        return viewModel.exerciseStates[idx].defaultRestSeconds
+                    },
+                    set: { viewModel.setRestSeconds($0, for: viewModel.exerciseStates.firstIndex(where: { $0.id == exerciseState.id }) ?? 0) }
+                ))
+                .transition(.opacity.combined(with: .move(edge: .top)))
+
+                Button(action: { viewModel.addSet(to: exerciseIndex) }) {
+                    Label("Add Set", systemImage: "plus.circle.fill")
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                        .foregroundColor(.gymMuted)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, Spacing.sm)
+                        .background(Color.gymSurface)
+                        .cornerRadius(Radius.small)
+                }
+                .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
         .padding()

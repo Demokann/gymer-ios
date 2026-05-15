@@ -15,43 +15,59 @@ struct HistoryView: View {
     
     var body: some View {
         NavigationStack {
-            ZStack {
-                Color.gymBlack.ignoresSafeArea()
-                
-                if viewModel.sessions.isEmpty && !viewModel.isLoading {
-                    emptyState
-                } else {
-                    workoutList
+            HistoryListView(viewModel: viewModel)
+                .navigationTitle("History")
+                .onAppear {
+                    viewModel.fetchHistory()
                 }
-            }
-            .navigationTitle("History")
-            .onAppear {
-                viewModel.fetchHistory()
+        }
+    }
+}
+
+struct HistoryListView: View {
+    var viewModel: HistoryViewModel
+
+    var body: some View {
+        ZStack {
+            Color.gymBlack.ignoresSafeArea()
+
+            if viewModel.sessions.isEmpty && !viewModel.isLoading {
+                emptyState
+            } else {
+                workoutList
             }
         }
     }
-    
+
     // MARK: - Subviews
-    
+
     private var workoutList: some View {
         List {
             ForEach(viewModel.groupedSessions, id: \.month) { group in
                 Section {
                     ForEach(group.sessions) { session in
-                        NavigationLink {
-                            WorkoutDetailView(session: session)
-                        } label: {
-                            workoutRow(session)
+                        HStack(spacing: Spacing.md) {
+                            Button {
+                                withAnimation {
+                                    viewModel.deleteSession(session)
+                                }
+                            } label: {
+                                Image(systemName: "trash")
+                                    .foregroundStyle(Color.gymRed)
+                                    .padding(8)
+                                    .background(Color.gymSurface)
+                                    .cornerRadius(8)
+                            }
+                            .buttonStyle(.plain)
+
+                            NavigationLink {
+                                WorkoutDetailView(session: session)
+                            } label: {
+                                workoutRow(session)
+                            }
                         }
                         .listRowBackground(Color.gymSurface)
                         .listRowInsets(EdgeInsets(top: Spacing.sm, leading: Spacing.lg, bottom: Spacing.sm, trailing: Spacing.lg))
-                        .swipeActions(edge: .trailing) {
-                            Button(role: .destructive) {
-                                viewModel.deleteSession(session)
-                            } label: {
-                                Label("Delete", systemImage: "trash")
-                            }
-                        }
                     }
                 } header: {
                     Text(group.month)
@@ -125,6 +141,7 @@ struct HistoryView: View {
         .padding(Spacing.xxl)
     }
 }
+
 
 #Preview {
     let config = ModelConfiguration(isStoredInMemoryOnly: true)

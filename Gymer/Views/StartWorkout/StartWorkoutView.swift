@@ -12,6 +12,9 @@ struct StartWorkoutView: View {
     @Environment(TimerService.self) private var timerService
     
     @State private var viewModel: TemplateListViewModel
+    @State private var historyViewModel: HistoryViewModel
+    @State private var selectedSegment = 0 // 0: Workouts, 1: History
+    
     @State private var showingTemplateEditor = false
     @State private var selectedTemplate: WorkoutTemplate?
     @State private var showingActiveWorkout = false
@@ -19,23 +22,31 @@ struct StartWorkoutView: View {
     // MARK: - Initialization
     init(modelContext: ModelContext) {
         _viewModel = State(initialValue: TemplateListViewModel(modelContext: modelContext))
+        _historyViewModel = State(initialValue: HistoryViewModel(modelContext: modelContext))
     }
     
     // MARK: - Body
     
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: Spacing.xxl) {
-                    templatesSection
-                    
-                    quickStartSection
+            VStack(spacing: 0) {
+                Picker("View", selection: $selectedSegment) {
+                    Text("Workouts").tag(0)
+                    Text("History").tag(1)
                 }
+                .pickerStyle(.segmented)
                 .padding()
+                .background(Color.gymBlack)
+                
+                if selectedSegment == 0 {
+                    workoutsContent
+                } else {
+                    HistoryListView(viewModel: historyViewModel)
+                }
             }
             .background(Color.gymBlack)
-            .navigationTitle("Start Workout")
-            .navigationBarTitleDisplayMode(.large)
+            .navigationTitle(selectedSegment == 0 ? "Start Workout" : "History")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Close") { dismiss() }
@@ -43,9 +54,22 @@ struct StartWorkoutView: View {
                 }
             }
             .task {
-                viewModel.fetchTemplates()
+                if selectedSegment == 0 {
+                    viewModel.fetchTemplates()
+                } else {
+                    historyViewModel.fetchHistory()
+                }
             }
-            .sheet(isPresented: $showingTemplateEditor) {
+            .onChange(of: selectedSegment) { _, newValue in
+                if newValue == 0 {
+                    viewModel.fetchTemplates()
+                } else {
+                    historyViewModel.fetchHistory()
+                }
+            }
+            .sheet(isPresented: $showingTemplateEditor, onDismiss: {
+                viewModel.fetchTemplates()
+            }) {
                 TemplateEditorView(modelContext: modelContext)
             }
             .fullScreenCover(isPresented: $showingActiveWorkout) {
@@ -56,6 +80,17 @@ struct StartWorkoutView: View {
     }
     
     // MARK: - Subviews
+    
+    private var workoutsContent: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: Spacing.xxl) {
+                templatesSection
+                
+                quickStartSection
+            }
+            .padding()
+        }
+    }
     
     private var templatesSection: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {

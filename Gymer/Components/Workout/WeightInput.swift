@@ -10,30 +10,30 @@ struct WeightInput: View {
     let label: String
     
     var body: some View {
-        VStack(alignment: .center, spacing: Spacing.xs) {
+        VStack(alignment: .center, spacing: 2) {
             Text(label)
-                .gymFont(.caption)
+                .font(.system(size: 10, weight: .bold))
                 .foregroundColor(.gymMuted)
             
-            HStack(spacing: Spacing.sm) {
+            HStack(spacing: 4) {
                 Button {
                     adjustWeight(by: -2.5)
                 } label: {
                     Image(systemName: "minus")
-                        .font(.system(size: 14, weight: .bold))
+                        .font(.system(size: 12, weight: .bold))
                         .foregroundColor(.gymLime)
-                        .frame(width: 32, height: 32)
+                        .frame(width: 28, height: 28)
                         .background(Color.gymSurface)
                         .clipShape(Circle())
                 }
                 
                 TextField("0", value: $weight, format: .number)
                     .keyboardType(.decimalPad)
-                    .gymFont(.mono)
+                    .font(.system(.body, design: .monospaced))
                     .foregroundColor(.gymWhite)
                     .multilineTextAlignment(.center)
-                    .frame(width: 60)
-                    .padding(.vertical, Spacing.xs)
+                    .frame(width: 54)
+                    .padding(.vertical, 4)
                     .background(Color.gymCard)
                     .cornerRadius(Radius.small)
                 
@@ -41,9 +41,9 @@ struct WeightInput: View {
                     adjustWeight(by: 2.5)
                 } label: {
                     Image(systemName: "plus")
-                        .font(.system(size: 14, weight: .bold))
+                        .font(.system(size: 12, weight: .bold))
                         .foregroundColor(.gymLime)
-                        .frame(width: 32, height: 32)
+                        .frame(width: 28, height: 28)
                         .background(Color.gymSurface)
                         .clipShape(Circle())
                 }
